@@ -72,8 +72,8 @@ module viterbi_tx_rx #(parameter N=4) (
 
 // insert your term project code here 
    decoder decoder1	     (
-      .clk,
-      .rst,
+      .clk(clk),
+      .rst(rst),
       .enable (enable_decoder_in),
       .d_in   (encoder_o_reg),
       .d_out  (decoder_o)   );

@@ -10,6 +10,11 @@ memory core itself
    logic                  mem   [1024];
 
    always @ (posedge clk) 
+   if (wr) begin
+      mem[addr] <= d_i;
+   end
+   d_o <= mem[addr];
+endmodule
 /*
    write synchronously to memory core if enabled
    read synchronously at all times (equiv. to DFF at mem data out)
