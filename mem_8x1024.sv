@@ -15,8 +15,4 @@ memory core itself
    end
    d_o <= mem[addr];
 endmodule
-/*
-   write synchronously to memory core if enabled
-   read synchronously at all times (equiv. to DFF at mem data out)
-*/      
-endmodule
+
