@@ -28,7 +28,7 @@ module decoder
    wire  [1:0]       bmc4_path_1_bmc;
    wire  [1:0]       bmc5_path_1_bmc;
    wire  [1:0]       bmc6_path_1_bmc;
-   wire  [1:0]       bmc7_path_0_bmc;
+   wire  [1:0]       bmc7_path_1_bmc;
 
 
 // -------- ACS Module Signals --------
@@ -142,14 +142,14 @@ module decoder
 
 
 //Branch Metric Computation Modules (8 total)
-   bmc   bmc0_inst(3'd0, d_in,bmc0_path_0_bmc,bmc0_path_1_bmc);
-   bmc   bmc1_inst(3'd1, d_in,bmc1_path_0_bmc,bmc1_path_1_bmc);
-   bmc   bmc2_inst(3'd2, d_in,bmc2_path_0_bmc,bmc2_path_1_bmc);
-   bmc   bmc3_inst(3'd3, d_in,bmc3_path_0_bmc,bmc3_path_1_bmc);
-   bmc   bmc4_inst(3'd4, d_in,bmc4_path_0_bmc,bmc4_path_1_bmc);
-   bmc   bmc5_inst(3'd5, d_in,bmc5_path_0_bmc,bmc5_path_1_bmc);
-   bmc   bmc6_inst(3'd6, d_in,bmc6_path_0_bmc,bmc6_path_1_bmc);
-   bmc   bmc7_inst(3'd7, d_in,bmc7_path_0_bmc,bmc7_path_1_bmc);
+   bmc0   bmc0_inst( d_in,bmc0_path_0_bmc,bmc0_path_1_bmc);
+   bmc1   bmc1_inst( d_in,bmc1_path_0_bmc,bmc1_path_1_bmc);
+   bmc2   bmc2_inst( d_in,bmc2_path_0_bmc,bmc2_path_1_bmc);
+   bmc3   bmc3_inst( d_in,bmc3_path_0_bmc,bmc3_path_1_bmc);
+   bmc4   bmc4_inst( d_in,bmc4_path_0_bmc,bmc4_path_1_bmc);
+   bmc5   bmc5_inst( d_in,bmc5_path_0_bmc,bmc5_path_1_bmc);
+   bmc6   bmc6_inst( d_in,bmc6_path_0_bmc,bmc6_path_1_bmc);
+   bmc7   bmc7_inst( d_in,bmc7_path_0_bmc,bmc7_path_1_bmc);
 // Note: bmc is a module that computes the branch metric for each path based on the input data d_in.
 
 //Add Compare Select Modules (8 copies -- note pattern in connections!!)
@@ -345,28 +345,28 @@ module decoder
 
 //Trelis memory module instantiation
 
-   mem   trelis_mem_A	   (
+   mem_8x1024   trelis_mem_A	   (
       .clk,
       .wr  (wr_mem_A),
       .addr(addr_mem_A),
       .d_i (d_in_mem_A),
       .d_o (d_o_mem_A)
    );
-   mem   trelis_mem_B	   (
+   mem_8x1024   trelis_mem_B	   (
       .clk,
       .wr  (wr_mem_B),
       .addr(addr_mem_B),
       .d_i (d_in_mem_B),
       .d_o (d_o_mem_B)
    );
-   mem   trelis_mem_C	   (
+   mem_8x1024   trelis_mem_C	   (
       .clk,
       .wr  (wr_mem_C),
       .addr(addr_mem_C),
       .d_i (d_in_mem_C),
       .d_o (d_o_mem_C)
    );
-   mem   trelis_mem_D	   (
+   mem_8x1024   trelis_mem_D	   (
       .clk,
       .wr  (wr_mem_D),
       .addr(addr_mem_D),
@@ -471,14 +471,14 @@ module decoder
 //Display Memory modules Instantioation
 //   d_in_disp_mem_K   =  d_o_tbu_K;  K=0,1
 
-  mem_disp   disp_mem_0	  (
+  mem_1x1024   mem_1x10	  (
       .clk              ,
       .wr(wr_disp_mem_0),
       .addr(addr_disp_mem_0),
       .d_i(d_in_disp_mem_0),
       .d_o(d_o_disp_mem_0)
    );
-   mem_disp   disp_mem_1	  (
+   mem_1x1024   disp_mem_1	  (
       .clk              ,
       .wr(wr_disp_mem_1),
       .addr(addr_disp_mem_1),
@@ -512,9 +512,23 @@ module decoder
             addr_disp_mem_1   <= wr_mem_counter_disp;
          end
      //  else:	 swap rd and wr 
-      endcase
+         else
+         begin
+            addr_disp_mem_0   <= wr_mem_counter_disp; 
+            addr_disp_mem_1   <= rd_mem_counter_disp;
+         end
+      
 
    always @ (posedge clk) 	 
+      if(!rst)
+         d_out <= 1'b0;	// reset to 0
+      else if(!enable)
+         d_out <= d_out;	// keep same value
+      else if(mem_bank_Q3)	// if mem_bank_Q3 is 1, then use d_o_tbu_1
+         d_out <= d_o_tbu_1;
+      else			// else use d_o_tbu_0
+         d_out <= d_o_tbu_0;
+
 /* pipeline mem_bank_Q3 to Q4 to Q5
  also  d_out = d_o_disp_mem_i 
     i = mem_bank_Q5 
