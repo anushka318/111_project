@@ -380,10 +380,7 @@ module decoder
    always @(posedge clk) begin
       /* create mem_bank, mem_bank_Q1, mem_bank_Q2 pipeline */
       mem_bank_Q   <= mem_bank;	   // pipeline stage 1
-      mem_bank_Q2  <= mem_bank_Q;	// pipeline stage 2
-      mem_bank_Q3  <= mem_bank_Q2;	// pipeline stage 3
-      mem_bank_Q4  <= mem_bank_Q3;	// pipeline stage 4
-      mem_bank_Q5  <= mem_bank_Q4;	// pipeline stage 5
+      mem_bank_Q2  <= mem_bank_Q;   // pipeline stage 2
    end
 // Note: mem_bank_Q, mem_bank_Q2, mem_bank_Q3, mem_bank_Q4, and mem_bank_Q5 are pipelined versions of the memory bank signal.
 
@@ -470,15 +467,17 @@ module decoder
    
 //Display Memory modules Instantioation
 //   d_in_disp_mem_K   =  d_o_tbu_K;  K=0,1
+assign d_in_disp_mem_0 = d_o_tbu_0; // input to display memory 0
+assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
 
-  mem_1x1024   mem_1x10	  (
+  mem_disp   mem_1x10	  (
       .clk              ,
       .wr(wr_disp_mem_0),
       .addr(addr_disp_mem_0),
       .d_i(d_in_disp_mem_0),
       .d_o(d_o_disp_mem_0)
    );
-   mem_1x1024   disp_mem_1	  (
+   mem_disp   disp_mem_1	  (
       .clk              ,
       .wr(wr_disp_mem_1),
       .addr(addr_disp_mem_1),
@@ -492,21 +491,23 @@ module decoder
 
    always @ (posedge clk)
       if(!rst)
-         wr_mem_counter_disp  <= min value + 2
+         wr_mem_counter_disp  <=  10'd0 + 10'd2;
       else if(!enable)
-         wr_mem_counter_disp  <= //same
+         wr_mem_counter_disp  <= 10'd0 + 10'd2; //same
       else
+         wr_mem_counter_disp <= wrr_mem_counter_disp - 10'd1;
 //       decrement wr_mem_counter_disp    
 
    always @ (posedge clk)
       if(!rst)
-         rd_mem_counter_disp  <= //max value - 2
+         rd_mem_counter_disp  <= 10'd1023 - 10'd2 //max value - 2
       else if(!enable)
-         rd_mem_counter_disp  <= //same
-      else         // increment    rd_mem_counter_disp     
+         rd_mem_counter_disp  <= 10'd1023 - 10'd2//same
+      else         // increment    rd_mem_counter_disp  
+         rd_mem_counter_disp <= rd_mem_counter_disp + 1'd1; // increment by 1   
    
    always @ (posedge clk)
-      // if !mem_bank_Q3
+      if (!mem_bank_Q3)
          begin
             addr_disp_mem_0   <= rd_mem_counter_disp; 
             addr_disp_mem_1   <= wr_mem_counter_disp;
@@ -533,5 +534,12 @@ module decoder
  also  d_out = d_o_disp_mem_i 
     i = mem_bank_Q5 
 */
+
+   always @ (posedge clk) begin
+      mem_bank_Q4 <= mem_bank_Q3; // pipeline stage 4
+      mem_bank_Q5 <= mem_bank_Q4; // pipeline stage 5
+   end
+
+   assign d_out = (mem_bank_Q5) ? d_o_tbu_1 : d_o_tbu_0; // output from trace back module
 
 endmodule
