@@ -281,7 +281,11 @@ module decoder
       end
 
    always @ (posedge clk)    begin
-      d_in_mem_k  <= selection;		  // k = A, B, C, D
+      // d_in_mem_k  <= selection;		  // k = A, B, C, D
+      d_in_mem_A  <= selection; 
+      d_in_mem_B  <= selection;
+      d_in_mem_C  <= selection;
+      d_in_mem_D  <= selection;
    end
 
 // ---- MEMORY BANK MANAGEMENT ---- //
@@ -500,9 +504,9 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
 
    always @ (posedge clk)
       if(!rst)
-         rd_mem_counter_disp  <= 10'd1023 - 10'd2 //max value - 2
+         rd_mem_counter_disp  <= 10'd1023 - 10'd2;  //max value - 2
       else if(!enable)
-         rd_mem_counter_disp  <= 10'd1023 - 10'd2//same
+         rd_mem_counter_disp  <= 10'd1023 - 10'd2; //same
       else         // increment    rd_mem_counter_disp  
          rd_mem_counter_disp <= rd_mem_counter_disp + 1'd1; // increment by 1   
    
@@ -520,16 +524,6 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
          end
       
 
-   always @ (posedge clk) 	 
-      if(!rst)
-         d_out <= 1'b0;	// reset to 0
-      else if(!enable)
-         d_out <= d_out;	// keep same value
-      else if(mem_bank_Q3)	// if mem_bank_Q3 is 1, then use d_o_tbu_1
-         d_out <= d_o_tbu_1;
-      else			// else use d_o_tbu_0
-         d_out <= d_o_tbu_0;
-
 /* pipeline mem_bank_Q3 to Q4 to Q5
  also  d_out = d_o_disp_mem_i 
     i = mem_bank_Q5 
@@ -540,6 +534,14 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
       mem_bank_Q5 <= mem_bank_Q4; // pipeline stage 5
    end
 
-   assign d_out = (mem_bank_Q5) ? d_o_tbu_1 : d_o_tbu_0; // output from trace back module
+   always @ (posedge clk)
+      if (mem_bank_Q5 == 1'b0)
+         d_out <= d_o_disp_mem_0; // output from display memory 0
+      else if (mem_bank_Q5 == 1'b1)
+         d_out <= d_o_disp_mem_1; // output from display memory 1
+      else
+         d_out <= 1'b0; // default case, no valid output
 
+
+   
 endmodule
