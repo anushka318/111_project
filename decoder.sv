@@ -204,7 +204,7 @@ module decoder
             // reset the memory bank
             mem_bank          <= 2'b00;	// A
          end
-
+      end
       else if (&{path_cost[0][7], path_cost[1][7], path_cost[2][7], path_cost[3][7], path_cost[4][7], path_cost[5][7], path_cost[6][7], path_cost[7][7]})  // all MSBs are 1
       // Reduction 7 of all path costs
       begin
@@ -343,7 +343,7 @@ module decoder
             addr_mem_D      <= wr_mem_counter; // write address for D
          end         	 
       endcase
-   end
+
 // memory bank management: always write to one, read from two others, keep address at 0 (no writing) for fourth one
 
 

@@ -6,7 +6,6 @@ module mem_disp					(
    input      [9:0]       addr,     
    input            d_i,      
    output logic     d_o  );
-   logic                  mem   [1024];
 
    logic  mem [0:1023];
 
