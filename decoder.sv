@@ -260,7 +260,7 @@ module decoder
       if(!rst)
          rd_mem_counter <= 10'd1023; // set to max value
       else if(enable)
-         rd_mem_counter <= rd_mem_counter - 10'd1 // count down by 1
+         rd_mem_counter <= rd_mem_counter - 10'd1; // count down by 1
    end
 
    always @ (posedge clk, negedge rst)
@@ -474,7 +474,7 @@ module decoder
 assign d_in_disp_mem_0 = d_o_tbu_0; // input to display memory 0
 assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
 
-  mem_disp   mem_1x10	  (
+  mem_disp   disp_mem_0	  (
       .clk              ,
       .wr(wr_disp_mem_0),
       .addr(addr_disp_mem_0),
@@ -499,7 +499,7 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
       else if(!enable)
          wr_mem_counter_disp  <= 10'd0 + 10'd2; //same
       else
-         wr_mem_counter_disp <= wrr_mem_counter_disp - 10'd1;
+         wr_mem_counter_disp <= wr_mem_counter_disp - 10'd1;
 //       decrement wr_mem_counter_disp    
 
    always @ (posedge clk)
@@ -534,14 +534,9 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
       mem_bank_Q5 <= mem_bank_Q4; // pipeline stage 5
    end
 
-   always @ (posedge clk)
-      if (mem_bank_Q5 == 1'b0)
-         d_out <= d_o_disp_mem_0; // output from display memory 0
-      else if (mem_bank_Q5 == 1'b1)
-         d_out <= d_o_disp_mem_1; // output from display memory 1
-      else
-         d_out <= 1'b0; // default case, no valid output
-
+   always @ (posedge clk) begin 
+      d_out <= (mem_bank_Q5) ? d_o_disp_mem_1 : d_o_disp_mem_0; // output from trace back module
+   end
 
    
 endmodule
