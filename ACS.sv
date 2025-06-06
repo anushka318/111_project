@@ -22,5 +22,5 @@ module ACS		                        // add-compare-select
                     (path_0_valid && !path_1_valid) ? 1'b0:
                     (path_cost_0 > path_cost_1) ? 1'b1: 1'b0;
 assign valid_o = path_0_valid || path_1_valid;
-assign path_cost = (selection == 1'b1) ? path_cost_1 : (selection == 1'b0) ? path_cost_0 : 1'b0;
+assign path_cost      =  (valid_o?(selection?path_cost_1:path_cost_0):8'b00000000);
 endmodule
