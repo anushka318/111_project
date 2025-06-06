@@ -244,41 +244,36 @@ module decoder
    // if rst (active low) or not enabling (active high), force to 0; else, increment by 1
    
    // --- Write Operation ---- //
-   always @ (posedge clk, negedge rst) begin	  // wr_mem_counter   commands
-      if(!rst)
-         wr_mem_counter <= 10'd0;	// set to min value
-      else if(!enable)
-         wr_mem_counter <= wr_mem_counter;	// keep same value
-      else if(wr_mem_counter == 10'd1023)	// max value
-         wr_mem_counter <= 10'd0;	// reset to min value
+   always @ (posedge clk or negedge rst)
+   begin
+      if(rst==1'b0)
+         wr_mem_counter <= 10'd0;
+      else if(enable==1'b0)
+         wr_mem_counter <= 10'd0;
       else
-         wr_mem_counter <= wr_mem_counter + 10'd1;	// increment by 1
+         wr_mem_counter <= wr_mem_counter + 10'd1;
    end
 
    // --- Read Operation ---- //
-   always @ (posedge clk, negedge rst) begin
-      if(!rst)
-         rd_mem_counter <= 10'd1023; // set to max value
-      else if(enable)
-         rd_mem_counter <= rd_mem_counter - 10'd1; // count down by 1
+   always @ (posedge clk or negedge rst)
+   begin
+      if(rst==1'b0)
+         rd_mem_counter <= 10'b1111111111;
+      else if(enable==1'b0)
+         wr_mem_counter <= 10'd0;
+      else
+         rd_mem_counter <= rd_mem_counter - 10'd1;
    end
 
-   always @ (posedge clk, negedge rst)
-      if(!rst)
-         mem_bank <= 2'b0;
+   always @ (posedge clk or negedge rst)
+   begin
+      if(rst==1'b0)
+         mem_bank <= 2'b00;
       else begin
-         /*if(wr_mem_counter = -1  fill in the guts*/
-         if(!enable)
-            mem_bank <= 2'b0;	// reset to 0
-         else if(wr_mem_counter == 10'd1023)	// max value
-            mem_bank <= 2'b0;	// reset to 0
-         else if(wr_mem_counter == 10'd0)	// min value
-            mem_bank <= 2'b0;	// reset to 0
-         else if(mem_bank == 2'b11)	// max value
-            mem_bank <= 2'b0;	// reset to 0
-         else
-               mem_bank <= mem_bank + 2'b1;
+         if(wr_mem_counter==10'b1111111111)
+               mem_bank <= mem_bank + 2'b01;
       end
+   end
 
    always @ (posedge clk)    begin
       // d_in_mem_k  <= selection;		  // k = A, B, C, D
@@ -380,25 +375,33 @@ module decoder
 // Note: trelis_mem_A, trelis_mem_B, trelis_mem_C, and trelis_mem_D are memory modules that store the path metrics for each path.
 
 //Trace back module operation
-
+/* create mem_bank, mem_bank_Q1, mem_bank_Q2 pipeline */
+   // pipeline stage 1
    always @(posedge clk) begin
-      /* create mem_bank, mem_bank_Q1, mem_bank_Q2 pipeline */
-      mem_bank_Q   <= mem_bank;	   // pipeline stage 1
-      mem_bank_Q2  <= mem_bank_Q;   // pipeline stage 2
+      
+      mem_bank_Q   <= mem_bank;	   
    end
-// Note: mem_bank_Q, mem_bank_Q2, mem_bank_Q3, mem_bank_Q4, and mem_bank_Q5 are pipelined versions of the memory bank signal.
+
+   // pipeline stage 2
+   always @ (posedge clk) begin   
+      mem_bank_Q2  <= mem_bank_Q;   
+   end
 
    always @ (posedge clk, negedge rst)
       if(!rst)
-            enable_tbu_0   <= 1'b0;
+         enable_tbu_0   <= 1'b0;
       else if(mem_bank_Q2==2'b10)
-            enable_tbu_0   <= 1'b1;
+         enable_tbu_0   <= 1'b1;
+      else 
+         enable_tbu_0 <= enable_tbu_0;
 
    always @ (posedge clk, negedge rst)
       if(!rst)
-            enable_tbu_1   <= 1'b0;
+         enable_tbu_1   <= 1'b0;
       else if(mem_bank_Q2==2'b11)
-            enable_tbu_1   <= 1'b1;
+         enable_tbu_1   <= 1'b1;
+      else
+         enable_tbu_1 <= enable_tbu_1;
    
    always @ (posedge clk)
       case(mem_bank_Q2)
@@ -528,10 +531,14 @@ assign d_in_disp_mem_1 = d_o_tbu_1; // input to display memory 1
  also  d_out = d_o_disp_mem_i 
     i = mem_bank_Q5 
 */
-
+   // pipeline stage 4
    always @ (posedge clk) begin
-      mem_bank_Q4 <= mem_bank_Q3; // pipeline stage 4
-      mem_bank_Q5 <= mem_bank_Q4; // pipeline stage 5
+      mem_bank_Q4 <= mem_bank_Q3;
+   end
+   
+   // pipeline stage 5
+   always @ (posedge clk) begin
+      mem_bank_Q5 <= mem_bank_Q4;
    end
 
    always @ (posedge clk) begin 
