@@ -8,10 +8,6 @@ module mem_disp					(
    output logic     d_o  );
 
    logic  mem [0:1023];
-initial
-begin
-  mem[addr] <= 0;
-end
 
    always_ff @(posedge clk) begin
       if (wr) begin
