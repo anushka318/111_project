@@ -200,10 +200,6 @@ module decoder
          path_cost[6]      <= 8'd0;
          path_cost[7]      <= 8'd0;
 
-         if (enable_tbu_0 || enable_tbu_1) begin
-            // reset the memory bank
-            mem_bank          <= 2'b00;	// A
-         end
       end
       else if (&{path_cost[0][7], path_cost[1][7], path_cost[2][7], path_cost[3][7], path_cost[4][7], path_cost[5][7], path_cost[6][7], path_cost[7][7]})  // all MSBs are 1
       // Reduction 7 of all path costs
@@ -244,35 +240,31 @@ module decoder
    // if rst (active low) or not enabling (active high), force to 0; else, increment by 1
    
    // --- Write Operation ---- //
-   always @ (posedge clk or negedge rst)
-   begin
-      if(rst==1'b0)
+   always @ (posedge clk or negedge rst) begin
+      if(!rst)
          wr_mem_counter <= 10'd0;
-      else if(enable==1'b0)
+      else if(!enable)
          wr_mem_counter <= 10'd0;
       else
          wr_mem_counter <= wr_mem_counter + 10'd1;
    end
 
    // --- Read Operation ---- //
-   always @ (posedge clk or negedge rst)
-   begin
-      if(rst==1'b0)
-         rd_mem_counter <= 10'b1111111111;
-      else if(enable==1'b0)
-         wr_mem_counter <= 10'd0;
+   always @ (posedge clk or negedge rst) begin
+      if(!rst)
+         rd_mem_counter <= 10'd1023;
+      else if(!enable)
+         rd_mem_counter <= 10'd1023;
       else
          rd_mem_counter <= rd_mem_counter - 10'd1;
    end
 
-   always @ (posedge clk or negedge rst)
-   begin
-      if(rst==1'b0)
+   // --- Memory Bank Management --- //
+   always @ (posedge clk or negedge rst) begin
+      if(!rst)
          mem_bank <= 2'b00;
-      else begin
-         if(wr_mem_counter==10'b1111111111)
-               mem_bank <= mem_bank + 2'b01;
-      end
+      else if(wr_mem_counter==10'd1023)
+         mem_bank <= mem_bank + 2'b01;
    end
 
    always @ (posedge clk)    begin
@@ -312,7 +304,7 @@ module decoder
             addr_mem_B      <= wr_mem_counter; // write address for B
             addr_mem_C      <= rd_mem_counter; // read address for C
             addr_mem_D      <= 10'd0;          // clear address for D
-         end         	 	 
+         end         	 	
 
          2'b10: begin      // write to C, clear A, read from others
             wr_mem_A        <= 1'b0;	// clear A
