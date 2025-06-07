@@ -12,7 +12,7 @@ module viterbi_tx_rx #(parameter N=4) (
 
    wire  [1:0] encoder_o;  // connects encoder to decoder
 
-   int           error_counter,	err_trig,
+   int           error_counter,	// err_trig,
                  bad_bit_ct,
                  word_ct;
    logic   [1:0] encoder_o_reg0,
@@ -40,11 +40,17 @@ module viterbi_tx_rx #(parameter N=4) (
          encoder_i_reg     <= encoder_i;
          encoder_o_reg0    <= encoder_o;
 // word_ct[N-1:0] generates strings of 2**N consecutive errors
-         word_ct              <= word_ct + 1;	err_trig = $random;		
-             		   // clean version
+         word_ct              <= word_ct + 1;	// err_trig = $random;		
+         if((word_ct<256) &&(word_ct[N-1:0]=='1)) begin	 // err_trig[N-1:0]
+            error_counter   <= error_counter + 1;
+//  N controls average rate of error injection
+		    err_inj        <= 2'b01;
+            encoder_o_reg  <= encoder_o^err_inj;	 // inject bad bits 
+         end
+         else begin       		   // clean version
             err_inj        <= 2'b00;
             encoder_o_reg  <= encoder_o;
-		
+		end
         if(word_ct<256) begin
           bad_bit_ct  <= bad_bit_ct + (encoder_o_reg0[1]^encoder_o_reg[1])
 		                      + (encoder_o_reg0[0]^encoder_o_reg[0]);
