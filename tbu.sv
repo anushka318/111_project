@@ -34,7 +34,10 @@ module tbu
    //pstate goes from 0 to 7
    //nstate goes from 0 to 7
   
- always_comb
+ always_comb begin
+      nstate = pstate; // default to stay in the same state
+      d_o_reg = 1'b0;  // default output
+      wr_en_reg = 1'b0; // default write enable
    begin
       case (pstate)
          3'b000:
@@ -206,4 +209,5 @@ module tbu
          end
       endcase
    end
+end
 endmodule
