@@ -3,7 +3,7 @@
 //  and Viterbi decoder
 // parameter N sets the channel bit error rate
 // this time, bit[0] every 16 clocks
-module viterbi_tx_rx #(parameter N=4) (
+module viterbi_tx_rx #(parameter N=5) (
    input    clk,
    input    rst,
    input    encoder_i,
@@ -13,7 +13,7 @@ module viterbi_tx_rx #(parameter N=4) (
    wire  [1:0] encoder_o;  // connects encoder to decoder
 
    int           error_counter,	err_trig,
-                 bad_bit_ct,
+                 bad_bit_ct,consecutive_error_counter,
                  word_ct;
    logic   [1:0] encoder_o_reg0,
                  encoder_o_reg;
@@ -25,8 +25,9 @@ module viterbi_tx_rx #(parameter N=4) (
 
    always @ (posedge clk, negedge rst) 
       if(!rst) begin  
-	  $display("viterbi_tx_rx2d.sv");
+	  $display("viterbi_tx_rx2c.sv");
          error_counter        <= 'd0;
+         consecutive_error_counter<='d0;
          encoder_o_reg        <= 'b0;		 
 		 encoder_o_reg0       <= 'b0;
          enable_decoder_in    <= 'b0;
@@ -39,18 +40,27 @@ module viterbi_tx_rx #(parameter N=4) (
 // bit error injection in encoder_o_reg        					           					           
          encoder_i_reg     <= encoder_i;
          encoder_o_reg0    <= encoder_o;
+         
+         
 // word_ct[N-1:0] generates strings of 2**N consecutive errors
-         word_ct              <= word_ct + 1;	err_trig = $random;		
-         if((word_ct<256) &&(word_ct[N-1:0]=='1)) begin	 // err_trig[N-1:0]
+         word_ct              <= word_ct + 1;	err_trig = $random;	
+         
+         
+         if((word_ct<256) &&((err_trig[N-1:0]=='1)||(consecutive_error_counter>0 && consecutive_error_counter<3))) begin	 // err_trig[N-1:0]
             error_counter   <= error_counter + 1;
+            consecutive_error_counter<=consecutive_error_counter+1;
 //  N controls average rate of error injection
-		    err_inj        <= 2'b01;
+		    err_inj        <= 2'b10;
             encoder_o_reg  <= encoder_o^err_inj;	 // inject bad bits 
          end
+         
+         
          else begin       		   // clean version
             err_inj        <= 2'b00;
             encoder_o_reg  <= encoder_o;
 		end
+		
+		if(consecutive_error_counter==3) consecutive_error_counter<=0;
         if(word_ct<256) begin
           bad_bit_ct  <= bad_bit_ct + (encoder_o_reg0[1]^encoder_o_reg[1])
 		                      + (encoder_o_reg0[0]^encoder_o_reg[0]);
@@ -72,8 +82,8 @@ module viterbi_tx_rx #(parameter N=4) (
 
 // insert your term project code here 
    decoder decoder1	     (
-      .clk(clk),
-      .rst(rst),
+      .clk,
+      .rst,
       .enable (enable_decoder_in),
       .d_in   (encoder_o_reg),
       .d_out  (decoder_o)   );

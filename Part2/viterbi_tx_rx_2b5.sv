@@ -13,7 +13,7 @@ module viterbi_tx_rx #(parameter N=4) (
    wire  [1:0] encoder_o;  // connects encoder to decoder
 
    int           error_counter,	err_trig,
-                 bad_bit_ct,
+                 bad_bit_ct,error_count,//logic to check how many errors injected
                  word_ct;
    logic   [1:0] encoder_o_reg0,
                  encoder_o_reg;
@@ -25,13 +25,14 @@ module viterbi_tx_rx #(parameter N=4) (
 
    always @ (posedge clk, negedge rst) 
       if(!rst) begin  
-	  $display("viterbi_tx_rx2a1.sv");
+	  $display("viterbi_tx_rx2b5.sv");
          error_counter        <= 'd0;
          encoder_o_reg        <= 'b0;		 
 		 encoder_o_reg0       <= 'b0;
          enable_decoder_in    <= 'b0;
 		 enable_encoder_i_reg <= 'b0;
 		 word_ct              <= 'b0;
+         error_count          <= 'd0; // initialize error count
       end
       else begin 
          enable_encoder_i_reg <= enable_encoder_i;  
@@ -41,10 +42,11 @@ module viterbi_tx_rx #(parameter N=4) (
          encoder_o_reg0    <= encoder_o;
 // word_ct[N-1:0] generates strings of 2**N consecutive errors
          word_ct              <= word_ct + 1;	err_trig = $random;		
-         if((word_ct<256) &&(word_ct[N-1:0]=='1)) begin	 // err_trig[N-1:0]
+         if((word_ct<256) && (err_trig[N-1:0] < 2)) begin	 // err_trig[N-1:0]
             error_counter   <= error_counter + 1;
+            error_count <= error_count + 1; // increment error count
 //  N controls average rate of error injection
-		    err_inj        <= 2'b01;
+		    err_inj        <= $random % 4; // random error injection
             encoder_o_reg  <= encoder_o^err_inj;	 // inject bad bits 
          end
          else begin       		   // clean version

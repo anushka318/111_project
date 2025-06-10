@@ -41,7 +41,7 @@ module viterbi_tx_rx #(parameter N=4) (
          encoder_o_reg0    <= encoder_o;
 // word_ct[N-1:0] generates strings of 2**N consecutive errors
          word_ct              <= word_ct + 1;	err_trig = $random;		
-         if((word_ct<256) &&((word_ct[N-1:0]=='1)||(word_ct[N-1:0]==4'b1110))) begin	 // err_trig[N-1:0]
+         if((word_ct<256) && ((word_ct[N-1:0]=='d14)||(word_ct[N-1:0]== 'd15))) begin	 // err_trig[N-1:0]
             error_counter   <= error_counter + 1;
 //  N controls average rate of error injection
 		    err_inj        <= 2'b01;
