@@ -45,7 +45,7 @@ module viterbi_tx_rx #(parameter N=3) (
          if((word_ct<256) &&(err_trig[N-1:0] == '1)) begin	 // err_trig[N-1:0]
             error_counter   <= error_counter + 1;
 //  N controls average rate of error injection
-		    err_inj        <= $random % 4; // random error injection
+		    err_inj        <= 2'b10; // random error injection
             encoder_o_reg  <= encoder_o^err_inj;	 // inject bad bits 
          end
          else begin       		   // clean version
